@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Café Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="admin-login-screen" class="login-screen">
+        <form id="admin-login-form" class="login-card">
+            <div class="login-icon">☕</div>
+            <h1>Café Admin</h1>
+            <p>Sign in to manage your café</p>
+            <div class="form-group">
+                <label for="admin-username">Username</label>
+                <input id="admin-username" name="username" type="text" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input id="admin-password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+            <p id="login-error" class="login-error" role="alert"></p>
+            <button id="login-submit" type="submit" class="btn btn-primary login-submit">Sign In</button>
+            <p class="login-hint">Administrator access only</p>
+        </form>
+    </div>
+    <div id="main-app" style="display:none">
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>☕ Café Management System</h1>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-link active">Home</a>
+                <a href="#tables" class="nav-link">Tables</a>
+                <a href="#menu" class="nav-link">Menu</a>
+                <a href="#orders" class="nav-link">Orders</a>
+                <div class="admin-controls">
+                    <span id="admin-welcome">Administrator</span>
+                    <button class="btn btn-secondary btn-small" onclick="logoutAdmin()">Log Out</button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Dashboard Stats Section -->
+        <section class="dashboard">
+            <h2 class="section-title">Dashboard Statistics</h2>
+            <div class="stats-grid">
+                <!-- Query 1: Tables Booked in Past 2 Months -->
+                <div class="stat-card">
+                    <div class="stat-icon">🪑</div>
+                    <div class="stat-content">
+                        <h3>Tables Booked</h3>
+                        <p class="stat-label">Past 2 Months</p>
+                        <p class="stat-value" id="tables-booked">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Current Active Tables -->
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <h3>Active Tables</h3>
+                        <p class="stat-label">Booked Right Now</p>
+                        <p class="stat-value" id="tables-booked-current">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Query 2: Most Popular Item -->
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <h3>Most Popular Item</h3>
+                        <p class="stat-label">Best Seller</p>
+                        <p class="stat-value" id="popular-item">Loading...</p>
+                        <p class="stat-subtitle" id="popular-item-details"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tables Section -->
+        <section id="tables" class="section">
+            <h2 class="section-title">Booked Tables</h2>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="showBookTableModal()">Book New Table</button>
+                <button class="btn btn-secondary" onclick="loadTables()">Refresh</button>
+            </div>
+            <div id="tables-container" class="tables-grid">
+                <!-- Tables will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Menu Items Section -->
+        <section id="menu" class="section">
+            <h2 class="section-title">Menu Items</h2>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="showAddMenuItemModal()">Add Menu Item</button>
+                <button class="btn btn-secondary" onclick="loadMenuItems()">Refresh</button>
+            </div>
+            <div id="menu-container" class="menu-grid">
+                <!-- Menu items will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Orders Section -->
+        <section id="orders" class="section">
+            <h2 class="section-title">Recent Orders</h2>
+            <div class="controls">
+                <button class="btn btn-secondary" onclick="loadOrders()">Refresh</button>
+            </div>
+            <div id="orders-container" class="orders-list">
+                <!-- Orders will be loaded here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Book Table Modal -->
+    <div id="book-table-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('book-table-modal')">&times;</span>
+            <h2>Book a Table</h2>
+            <form id="book-table-form" onsubmit="bookTable(event)">
+                <div class="form-group">
+                    <label for="table-id">Table ID:</label>
+                    <input type="number" id="table-id" name="table_id" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="user-id">User ID:</label>
+                    <input type="number" id="user-id" name="user_id" required min="1">
+                </div>
+                <button type="submit" class="btn btn-primary">Book Table</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Menu Item Modal -->
+    <div id="add-menu-item-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('add-menu-item-modal')">&times;</span>
+            <h2>Add Menu Item</h2>
+            <form id="add-menu-item-form" onsubmit="addMenuItem(event)">
+                <div class="form-group">
+                    <label for="item-name">Item Name:</label>
+                    <input type="text" id="item-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="item-price">Price:</label>
+                    <input type="number" id="item-price" name="price" step="0.01" required min="0">
+                </div>
+                <div class="form-group">
+                    <label for="item-stock">Stock:</label>
+                    <input type="number" id="item-stock" name="stock" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="item-category">Category:</label>
+                    <input type="text" id="item-category" name="category">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Place Order Modal -->
+    <div id="place-order-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('place-order-modal')">&times;</span>
+            <h2>Place Order</h2>
+            <form id="place-order-form" onsubmit="placeOrder(event)">
+                <div class="form-group">
+                    <label for="order-table-id">Table ID:</label>
+                    <input type="number" id="order-table-id" name="table_id" required readonly>
+                </div>
+                <div class="form-group">
+                    <label for="order-item-id">Menu Item:</label>
+                    <select id="order-item-id" name="item_id" required>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="order-user-id">User ID:</label>
+                    <input type="number" id="order-user-id" name="user_id" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="order-quantity">Quantity:</label>
+                    <input type="number" id="order-quantity" name="quantity" min="1" value="1" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Place Order</button>
+            </form>
+        </div>
+    </div>
+
+    </div><!-- /main-app -->
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
+
